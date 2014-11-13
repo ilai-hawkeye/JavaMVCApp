@@ -17,7 +17,10 @@ import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 
 public class MyDispatcherServlet extends HttpServlet {
@@ -110,7 +113,15 @@ public class MyDispatcherServlet extends HttpServlet {
                 Class<?> controllerClass = Class.forName(methodAttributes.getControllerClass());
                 Object controllerInstance = controllerClass.newInstance();
                 Method method = controllerClass.getMethod(methodAttributes.getMethodName(),methodAttributes.getParameters());
-                Object response = method.invoke(controllerInstance);
+                List<String> list = new ArrayList<>();
+                Parameter[] parameters = method.getParameters();
+                for(Parameter parameter : parameters){
+
+                    list.add(req.getParameter(parameter.getName()));
+                }
+
+                Object response = method.invoke(controllerInstance,(String[]) list.toArray(new String[0]));
+
                 System.out.println(response);
 
                 return response;

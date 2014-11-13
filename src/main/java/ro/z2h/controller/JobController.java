@@ -2,20 +2,19 @@ package ro.z2h.controller;
 
 import ro.z2h.annotation.MyController;
 import ro.z2h.annotation.MyRequestMethod;
-import ro.z2h.domain.Department;
-import ro.z2h.service.DepartmentServiceImpl;
+import ro.z2h.domain.Job;
+import ro.z2h.service.JobServiceImpl;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by Dumitru on 11.11.2014.
+ * Created by Ilai Hawkeye on 11/13/2014.
  */
-@MyController(urlPath = "/departments")
-public class DepartmentController {
+@MyController(urlPath = "/jobs")
+public class JobController {
 
     @MyRequestMethod(urlPath = "/all")
-    public List<Department> getAllDepartments() {
+    public List<Job> getAllJobs() {
 //        List<Department> departmentList = new ArrayList<Department>();
 //        Department department= new Department();
 //        department.setId((long) 1);
@@ -26,7 +25,7 @@ public class DepartmentController {
 //        department2.setDepartmentName("DEPART");
 //        departmentList.add(department2);
 //        return departmentList;
-        DepartmentServiceImpl departmentService = new DepartmentServiceImpl();
-        return departmentService.findAllDepartments();
+        JobServiceImpl departmentService = new JobServiceImpl();
+        return departmentService.findAllJobs();
     }
 }
