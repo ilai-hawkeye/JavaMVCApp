@@ -8,6 +8,15 @@ public class MethodAttributes {
     String controllerClass;
     String methodName;
     String methodType;
+    Class<?>[] parameters;
+
+    public Class<?>[] getParameters() {
+        return parameters;
+    }
+
+    public void setParameters(Class<?>[] parameters) {
+        this.parameters = parameters;
+    }
 
     public String getControllerClass() {
         return controllerClass;
@@ -53,6 +62,7 @@ public class MethodAttributes {
         if(methodType != null ? !methodType.equals(that.methodType) : that.methodType != null) {
             return false;
         }
+
 
         return true;
     }

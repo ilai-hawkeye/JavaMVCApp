@@ -1,9 +1,12 @@
 package ro.z2h;
 
+import org.codehaus.jackson.map.ObjectMapper;
 import ro.z2h.annotation.MyController;
+import ro.z2h.annotation.MyRequestMethod;
 import ro.z2h.controller.DepartmentController;
 import ro.z2h.controller.EmployeeController;
 import ro.z2h.fmk.AnnotationScanUtils;
+import ro.z2h.fmk.MethodAttributes;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -12,12 +15,14 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.HashMap;
 
-/**
- * Created by Dumitru on 11.11.2014.
- */
+
 public class MyDispatcherServlet extends HttpServlet {
 
+    HashMap<String, MethodAttributes>  hashMap = new HashMap<String, MethodAttributes>();
     @Override
     public void init() throws ServletException {
         /* Initialize controller pool. */
@@ -29,8 +34,23 @@ public class MyDispatcherServlet extends HttpServlet {
                 if(aClass.isAnnotationPresent(MyController.class)) {
                     MyController mc = (MyController)aClass.getAnnotation(MyController.class);
                     System.out.println(mc.urlPath());
+
+                    Method[] methods1 = aClass.getMethods();
+                    for (Method method : methods1)
+                        if (method.isAnnotationPresent(MyRequestMethod.class)) {
+                            MyRequestMethod myRM = (MyRequestMethod) method.getAnnotation(MyRequestMethod.class);
+                            System.out.println(myRM.urlPath());
+                            MethodAttributes ma = new MethodAttributes();
+                            ma.setControllerClass((aClass.getName()));
+                            ma.setMethodName(method.getName());
+                            ma.setMethodType(myRM.methodType());
+                            ma.setParameters(method.getParameterTypes());
+
+                            hashMap.put((mc.urlPath() + myRM.urlPath()),ma);
+                        }
                 }
             }
+            System.out.println(hashMap);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -71,23 +91,55 @@ public class MyDispatcherServlet extends HttpServlet {
         /* pentru /test = Hello! */
         /* pentru /employee = allEmployees de la app controller */
 
-        String pathInfo = req.getPathInfo();
-        if(pathInfo.startsWith("/employees")) {
-            EmployeeController ec = new EmployeeController();
-            return ec.getAllEmployees();
-        } else if(pathInfo.startsWith("/department")) {
-            DepartmentController dc = new DepartmentController();
-            return dc.getAllDepartments();
-        }
+//        if(pathInfo.startsWith("/employees")) {
+//            EmployeeController ec = new EmployeeController();
+//            return ec.getAllEmployees();
+//        } else if(pathInfo.startsWith("/department")) {
+//            DepartmentController dc = new DepartmentController();
+//            return dc.getAllDepartments();
+//        }
 
-        return "Hello from Z2H!";
+        String pathInfo = req.getPathInfo();
+        req.getParameterMap();
+
+
+        MethodAttributes methodAttributes = hashMap.get(pathInfo);
+
+        if(methodAttributes != null){
+            try {
+                Class<?> controllerClass = Class.forName(methodAttributes.getControllerClass());
+                Object controllerInstance = controllerClass.newInstance();
+                Method method = controllerClass.getMethod(methodAttributes.getMethodName(),methodAttributes.getParameters());
+                Object response = method.invoke(controllerInstance);
+                System.out.println(response);
+
+                return response;
+
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } catch (InstantiationException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
     }
+
 
     /* Used to send the view to the client. */
     private void reply(Object objDispatch, HttpServletRequest req, HttpServletResponse resp) throws IOException {
         //TODO
         PrintWriter writer = resp.getWriter();
-        writer.printf(objDispatch.toString());
+        ObjectMapper mapper = new ObjectMapper();
+        String s = mapper.writeValueAsString(objDispatch);
+
+        writer.printf(s);
+
     }
 
     /* Used to send an exception to the client. */
